@@ -1,7 +1,7 @@
-const mongoose = require("mongoose");
-const validator = require("validator");
-const bcrypt = require("bcryptjs");
-const UnauthorizedError = require("../errors/UnauthorizedError");
+const mongoose = require('mongoose');
+const validator = require('validator');
+const bcrypt = require('bcryptjs');
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const userSchema = new mongoose.Schema(
   {
@@ -24,18 +24,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       minlength: 2,
       maxlength: 30,
-      default: "Жак-Ив Кусто",
+      default: 'Жак-Ив Кусто',
     },
     about: {
       type: String,
       minlength: 2,
       maxlength: 30,
-      default: "Исследователь",
+      default: 'Исследователь',
     },
     avatar: {
       type: String,
       default:
-        "https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png",
+        'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
       validate: {
         validator(v) {
           return /^https?:\/\/(ww\.)?[-\w]*\.[\w]{2,3}.*$/i.test(v);
@@ -43,17 +43,17 @@ const userSchema = new mongoose.Schema(
       },
     },
   },
-  { versionKey: false }
+  { versionKey: false },
 );
 
 userSchema.statics.findUserByCredentials = function findUserByCredentials(
   email,
-  password
+  password,
 ) {
-  const errorMessage = "Неправильные почта или пароль";
+  const errorMessage = 'Неправильные почта или пароль';
 
   return this.findOne({ email })
-    .select("+password")
+    .select('+password')
     .then((user) => {
       if (!user) {
         return Promise.reject(new UnauthorizedError(errorMessage));
@@ -67,4 +67,4 @@ userSchema.statics.findUserByCredentials = function findUserByCredentials(
     });
 };
 
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model('user', userSchema);
