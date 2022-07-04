@@ -25,19 +25,17 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardID)
+  Card.findById(req.params.cardID)
     .then((card) => {
       if (!card) {
         throw new NotFoundError('Карта не найдена');
       } else if (String(card.owner._id) !== req.user._id) {
         throw new ForbiddenError('Ты не можешь удалить эта карту');
       } else {
-        card
-          .remove()
+        card.remove()
           .then(() => res.status(200).send({ message: 'Карточка удалена' }));
       }
-    })
-    .catch(next);
+    }).catch(next);
 };
 
 module.exports.likeCard = (req, res, next) => {
