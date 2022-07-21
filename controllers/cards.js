@@ -4,6 +4,12 @@ const NotFoundError = require('../errors/NotFoundError');
 const BadRequestError = require('../errors/BadRequestError');
 const ForbiddenError = require('../errors/ForbiddenError');
 
+module.exports.getCards = (req, res, next) => {
+  Card.find({})
+    .then((result) => res.send(result))
+    .catch(next);
+};
+
 module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user._id;
