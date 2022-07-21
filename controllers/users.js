@@ -7,14 +7,9 @@ const ConflictError = require('../errors/ConflictError');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
-module.exports.getUsers = (req, res, next) => {
-  User.find({})
-    .then((result) => res.send(result))
-    .catch(next);
-};
-
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
+
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign(
@@ -26,8 +21,26 @@ module.exports.login = (req, res, next) => {
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
       });
-      res.status(200).send({ message: 'Добро пожаловать!' });
+      res
+        .status(200)
+        .send({ message: 'Вход выполнен' });
     })
+    .catch(next);
+};
+
+module.exports.getUser = (req, res, next) => User
+  .findById(req.user._id)
+  .then((user) => {
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+    res.status(200).send(user);
+  })
+  .catch(next);
+
+module.exports.getUsers = (req, res, next) => {
+  User.find({})
+    .then((result) => res.send(result))
     .catch(next);
 };
 
@@ -41,55 +54,44 @@ module.exports.getUserById = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === 'CastError') {
-        next(new BadRequestError('Переданы некорректные данные для поиска'));
+        next(new BadRequestError('Передан некорректный id пользователя'));
         return;
-      }
-      next(error);
+      } next(error);
     });
 };
-
-module.exports.getUser = (req, res, next) => User.findById(req.user._id)
-  .then((user) => {
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
-    res.status(200).send(user);
-  })
-  .catch(next);
 
 module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
-  bcrypt.hash(password, 10).then((hash) => {
-    User.create({
-      name,
-      about,
-      avatar,
-      email,
-      password: hash,
-    })
-      .then((user) => {
-        const newUser = user.toObject();
-        delete newUser.password;
-
-        res.status(201).send(newUser);
+  bcrypt.hash(password, 10)
+    .then((hash) => {
+      User.create({
+        name, about, avatar, email, password: hash,
       })
-      .catch((error) => {
-        if (error.name === 'ValidationError') {
-          next(new BadRequestError('Переданы некорректные данные при создании пользователя'));
-        } else if (error.code === 11000) {
-          next(new ConflictError('Пользователем с такими данным уже зарегистрирован'));
-        } else {
-          next(error);
-        }
-      });
-  });
+        .then((user) => {
+          const newUser = user.toObject();
+          delete newUser.password;
+
+          res.status(201).send(newUser);
+        })
+        .catch((error) => {
+          if (error.name === 'ValidationError') {
+            next(new BadRequestError(`Переданы некорректные данные: ${error.message}`));
+          } else if (error.code === 11000) {
+            next(new ConflictError('Пользователем с данным email уже зарегистрирован'));
+          } else {
+            next(error);
+          }
+        });
+    })
+    .catch(next);
 };
 
 module.exports.updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
+
   User.findByIdAndUpdate(
     req.user._id,
     { name, about },
@@ -103,7 +105,7 @@ module.exports.updateUserInfo = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
+        next(new BadRequestError(`Переданы некорректные данные: ${error.message}`));
         return;
       }
       next(error);
@@ -112,6 +114,7 @@ module.exports.updateUserInfo = (req, res, next) => {
 
 module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
+
   User.findByIdAndUpdate(
     req.user._id,
     { avatar },
@@ -125,7 +128,7 @@ module.exports.updateUserAvatar = (req, res, next) => {
     })
     .catch((error) => {
       if (error.name === 'ValidationError') {
-        next(new BadRequestError('Переданы некорректные данные'));
+        next(new BadRequestError(`Переданы некорректные данные: ${error.message}`));
         return;
       }
       next(error);

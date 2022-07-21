@@ -34,11 +34,10 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default:
-        'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+      default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
       validate: {
         validator(v) {
-          return /^https?:\/\/(ww\.)?[-\w]*\.[\w]{2,3}.*$/i.test(v);
+          return /^https?:\/\/(www\.)?[-\w]*\.[\w]{2,3}.*$/i.test(v);
         },
       },
     },
@@ -46,24 +45,21 @@ const userSchema = new mongoose.Schema(
   { versionKey: false },
 );
 
-userSchema.statics.findUserByCredentials = function findUserByCredentials(
-  email,
-  password,
-) {
+userSchema.statics.findUserByCredentials = function findUserByCredentials(email, password) {
   const errorMessage = 'Неправильные почта или пароль';
 
-  return this.findOne({ email })
-    .select('+password')
+  return this.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return Promise.reject(new UnauthorizedError(errorMessage));
       }
-      return bcrypt.compare(password, user.password).then((matched) => {
-        if (!matched) {
-          return Promise.reject(new UnauthorizedError(errorMessage));
-        }
-        return user;
-      });
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new UnauthorizedError(errorMessage));
+          }
+          return user;
+        });
     });
 };
 

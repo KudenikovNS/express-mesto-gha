@@ -2,14 +2,14 @@ const router = require('express').Router();
 const { celebrate, Joi } = require('celebrate');
 const { validationForLink } = require('../utils/validationForLink');
 const {
-  getCard,
+  getCards,
   deleteCard,
   createCard,
-  likeCard,
-  dislikeCard,
+  setLike,
+  removeLike,
 } = require('../controllers/cards');
 
-router.get('/cards', getCard);
+router.get('/cards', getCards);
 
 router.post(
   '/cards',
@@ -39,7 +39,7 @@ router.put(
       cardId: Joi.string().required().length(24).hex(),
     }),
   }),
-  likeCard,
+  setLike,
 );
 
 router.delete(
@@ -49,7 +49,7 @@ router.delete(
       cardId: Joi.string().required().length(24).hex(),
     }),
   }),
-  dislikeCard,
+  removeLike,
 );
 
 module.exports = router;
