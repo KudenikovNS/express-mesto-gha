@@ -7,10 +7,10 @@ const cors = require('./middlewares/cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-// const errorsHandler = require('./middlewares/errorsHandler');
+const errorsHandler = require('./middlewares/errorsHandler');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
-const { linkValidation } = require('./utils/linkValidation');
+const { validationForLink } = require('./utils/validationForLink');
 const NotFoundError = require('./errors/NotFoundError');
 
 const { PORT = 3000 } = process.env;
@@ -20,8 +20,10 @@ const app = express();
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
 
 app.use(cors);
+
 app.use(cookieParser());
 app.use(express.json());
+
 app.use(requestLogger);
 
 app.get('/crash-test', () => {
@@ -30,41 +32,41 @@ app.get('/crash-test', () => {
   }, 0);
 });
 
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
+app.post(
+  '/signin',
+  celebrate({
+    body: Joi.object().keys({
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+    }),
   }),
-}), login);
+  login,
+);
 
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().required(),
-    name: Joi.string().min(2).max(30),
-    about: Joi.string().min(2).max(30),
-    avatar: Joi.string().custom(linkValidation),
+app.post(
+  '/signup',
+  celebrate({
+    body: Joi.object().keys({
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+      name: Joi.string().min(2).max(30),
+      about: Joi.string().min(2).max(30),
+      avatar: Joi.string().custom(validationForLink),
+    }),
   }),
-}), createUser);
+  createUser,
+);
 
 app.use(auth);
 
 app.use(userRouter);
 app.use(cardRouter);
 
-app.use('*', (req, res, next) => next(
-  new NotFoundError('Запрошен не существующий ресурс'),
-));
-
-app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
-  if (err.statusCode) {
-    return res.status(err.statusCode).send({ message: err.message });
-  }
-  return res.status(500).send({ message: 'Что-то пошло не так' });
-});
+app.use('*', (req, res, next) => next(new NotFoundError('Запрошен не существующий ресурс')));
 
 app.use(errorLogger);
+
 app.use(errors());
-// app.use(errorsHandler);
+app.use(errorsHandler);
 
 app.listen(PORT);

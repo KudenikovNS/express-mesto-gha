@@ -6,13 +6,13 @@ const UnauthorizedError = require('../errors/UnauthorizedError');
 module.exports = (req, res, next) => {
   const token = req.cookies.jwt;
   if (!token) {
-    throw new UnauthorizedError('Ошибка авторизации');
+    throw new UnauthorizedError('Ошибка при авторизации');
   }
   let payload;
   try {
     payload = jwt.verify(token, NODE_ENV ? JWT_SECRET : 'secret');
   } catch (error) {
-    throw new UnauthorizedError('Ошибка авторизации');
+    throw new UnauthorizedError('Ошибка при авторизации');
   }
   req.user = payload;
   next();
