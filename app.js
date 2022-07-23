@@ -7,7 +7,7 @@ const cors = require('./middlewares/cors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 const { login, createUser } = require('./controllers/users');
 const auth = require('./middlewares/auth');
-const errorsHandler = require('./middlewares/errorsHandler');
+// const errorsHandler = require('./middlewares/errorsHandler');
 const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 const { linkValidation } = require('./utils/linkValidation');
@@ -56,8 +56,15 @@ app.use('*', (req, res, next) => next(
   new NotFoundError('Запрошен не существующий ресурс'),
 ));
 
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+  if (err.statusCode) {
+    return res.status(err.statusCode).send({ message: err.message });
+  }
+  return res.status(500).send({ message: 'Что-то пошло не так' });
+});
+
 app.use(errorLogger);
 app.use(errors());
-app.use(errorsHandler);
+// app.use(errorsHandler);
 
 app.listen(PORT);
